@@ -3,6 +3,8 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
+import datetime as dt
+
 from .models import GenreTitle, Titles, Genres, Categories, Author
 
 
@@ -51,6 +53,7 @@ class TitlesSerializer(serializers.ModelSerializer):
         many=False,
         queryset=Author.objects.all()
     )
+    year = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('pk', 'title', 'author', 'year', 'category', 'genres')
@@ -61,6 +64,12 @@ class TitlesSerializer(serializers.ModelSerializer):
                 fields=('title', 'author', 'category')
             )
         ]
+
+    def validate_year(self, value):
+        year = dt.date.today().year
+        if value > year:
+            raise serializers.ValidationError('ПРоверьте год')
+        return value
 
     def create(self, validated_data):
         """Определяем наличие жанров и прописываем."""
