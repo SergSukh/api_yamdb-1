@@ -5,7 +5,15 @@ from rest_framework.validators import UniqueTogetherValidator
 
 import datetime as dt
 
-from .models import GenreTitle, Titles, Genres, Categories, Author
+from .models import (
+    GenreTitle,
+    Titles,
+    Genres,
+    Categories,
+    Author,
+    Reviews,
+    Comment
+)
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -36,7 +44,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categories
-        fields = '__all__'
+        fields = ('slug', 'category')
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -51,9 +59,10 @@ class TitlesSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='slug',
         many=False,
-        queryset=Author.objects.all()
+        queryset=Author.objects.all(),
+        required=False
     )
-    year = serializers.SerializerMethodField()
+    # year = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('pk', 'title', 'author', 'year', 'category', 'genres')
@@ -61,13 +70,13 @@ class TitlesSerializer(serializers.ModelSerializer):
         validators = [
             UniqueTogetherValidator(
                 queryset=Titles.objects.all(),
-                fields=('title', 'author', 'category')
+                fields=('title', 'year', 'category')
             )
         ]
 
     def validate_year(self, value):
-        year = dt.date.today().year
-        if value > year:
+        current_year = dt.date.today().year
+        if value > current_year:
             raise serializers.ValidationError('ПРоверьте год')
         return value
 
@@ -83,3 +92,34 @@ class TitlesSerializer(serializers.ModelSerializer):
             GenreTitle.objects.create(genre=current_genre, title=title)
 
         return title
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+    """Ревью для произведений"""
+    class Meta:
+        fields = '__all__'
+        model = Reviews
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Reviews.objects.all(),
+                fields=('text', 'author', 'title')
+            )
+        ]
+
+    def validate_score(self, value):
+        if 0 >= value >= 10:
+            raise serializers.ValidationError('Проверьте оценку')
+        return value
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    """Комментарии на отзывы"""
+    class Meta:
+        fields = '__all__'
+        model = Comment
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Comment.objects.all(),
+                fields=('text', 'author', 'review')
+            )
+        ]

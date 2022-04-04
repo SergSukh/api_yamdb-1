@@ -8,7 +8,7 @@ class IsModeratorOrReadOnly(permissions.BasePermission):
         """Безопасный метод или роль пользователя выше чем user"""
         if request.method in permissions.SAFE_METHODS:
             return True
-        if request.user.roles != 'user':
+        if request.user.roles in ['moderator', 'admin'] :
             return True
         return False
 
