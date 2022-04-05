@@ -62,10 +62,15 @@ class TitlesSerializer(serializers.ModelSerializer):
         queryset=Author.objects.all(),
         required=False
     )
-    # year = serializers.SerializerMethodField()
+    reviews = serializers.StringRelatedField(
+        many=True,
+        read_only=True,
+        allow_null=True
+    )
 
     class Meta:
-        fields = ('pk', 'title', 'author', 'year', 'category', 'genres')
+        # ('pk', 'title', 'author', 'year', 'category', 'genres', 'reviews')
+        fields = '__all__'
         model = Titles
         validators = [
             UniqueTogetherValidator(
@@ -99,6 +104,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Reviews
+        read_only_fields = ['title']
         validators = [
             UniqueTogetherValidator(
                 queryset=Reviews.objects.all(),

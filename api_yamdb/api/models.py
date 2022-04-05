@@ -99,10 +99,17 @@ class Reviews(models.Model):
         db_index=True
     )
     text = models.TextField()
-    score = models.IntegerChoices(
+    score = models.IntegerField(
         'Оценка',
         default=0
     )
+
+    class Meta:
+        ordering = ['-pub_date']
+
+    def __str__(self) -> str:
+        self.review = self.author + self.text
+        return self.review[:30]
 
 
 class Comment(models.Model):
