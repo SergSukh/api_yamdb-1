@@ -35,10 +35,8 @@ class Categories(models.Model):
 
 class Titles(models.Model):
     """Модель Произведение, базовая модель"""
-    title = models.TextField(
-        'Название произведения',
-        help_text='Введите название произведения'
-    )
+
+    name = models.TextField()
     title_urls = models.URLField(
         unique=True,
         blank=True,
@@ -54,7 +52,8 @@ class Titles(models.Model):
     )
     year = models.IntegerField(
         'Год релиза',
-        help_text='Введите год релиза')
+        help_text='Введите год релиза'
+    )
     genres = models.ManyToManyField(Genres, through='GenreTitle')
     category = models.ForeignKey(
         Categories,
@@ -65,11 +64,15 @@ class Titles(models.Model):
         blank=False,
         related_name='titles'
     )
+    description = models.TextField()
 
     class Meta:
-        ordering = ['-year']
+    #    ordering = ['-year']
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class GenreTitle(models.Model):
@@ -78,56 +81,3 @@ class GenreTitle(models.Model):
 
     def __str__(self) -> str:
         return f'{self.genre} {self.title}'
-
-
-class Reviews(models.Model):
-    title = models.ForeignKey(
-        Titles,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-        blank=False,
-        null=False
-    )
-    author = models.ForeignKey(
-        Author,
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
-    pub_date = models.DateTimeField(
-        'Дата отзыва',
-        auto_now_add=True,
-        db_index=True
-    )
-    text = models.TextField()
-    score = models.IntegerField(
-        'Оценка',
-        default=0
-    )
-
-    class Meta:
-        ordering = ['-pub_date']
-
-    def __str__(self) -> str:
-        self.review = self.author + self.text
-        return self.review[:30]
-
-
-class Comment(models.Model):
-    review = models.ForeignKey(
-        Reviews,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        blank=False,
-        null=False
-    )
-    author = models.ForeignKey(
-        Author,
-        on_delete=models.CASCADE,
-        related_name='comments'
-    )
-    pub_date = models.DateTimeField(
-        'Дата комментария',
-        auto_now_add=True,
-        db_index=True
-    )
-    text = models.TextField()

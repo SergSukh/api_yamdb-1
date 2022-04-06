@@ -1,26 +1,27 @@
 """Обработка запросов и ответов к базе произведения."""
 
+from turtle import title
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 import datetime as dt
 
-from .models import (
+from statistics import mean
+
+from composition.models import (
     GenreTitle,
     Titles,
     Genres,
     Categories,
-    Author,
-    Reviews,
-    Comment
+    Author
 )
+from review.models import (Reviews, Comment)
 
 
 class AuthorSerializer(serializers.ModelSerializer):
     """Для отображения по информации автор (для расширения)."""
 
-    titles = serializers.SlugRelatedField(
-        slug_field='title',
+    titles = serializers.StringRelatedField(
         many=True,
         allow_null=True,
         read_only=True
@@ -67,15 +68,16 @@ class TitlesSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
-        # ('pk', 'title', 'author', 'year', 'category', 'genres', 'reviews')
-        fields = '__all__'
+        # '__all__'
+        fields = ('pk', 'name', 'author', 'year', 'description', 'category', 'genres', 'reviews', 'rating')
         model = Titles
         validators = [
             UniqueTogetherValidator(
                 queryset=Titles.objects.all(),
-                fields=('title', 'year', 'category')
+                fields=('name', 'year', 'category')
             )
         ]
 
@@ -84,6 +86,11 @@ class TitlesSerializer(serializers.ModelSerializer):
         if value > current_year:
             raise serializers.ValidationError('ПРоверьте год')
         return value
+    
+    def get_rating(self, obj):
+        review = obj.reviews.all()
+        rating = review.count()
+        return rating
 
     def create(self, validated_data):
         """Определяем наличие жанров и прописываем."""
@@ -101,6 +108,14 @@ class TitlesSerializer(serializers.ModelSerializer):
 
 class ReviewsSerializer(serializers.ModelSerializer):
     """Ревью для произведений"""
+    author =serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset = Author.objects.all()
+    )
+    title = serializers.StringRelatedField(
+        many=False,
+        read_only=True
+    )
     class Meta:
         fields = '__all__'
         model = Reviews
