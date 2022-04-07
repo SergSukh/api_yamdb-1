@@ -18,16 +18,21 @@ class Author(models.Model):
 class Genres(models.Model):
     """Модель жанры, мнгое кмногому"""
     genre = models.CharField(max_length=200, unique=False)
+    slug = models.SlugField(unique=True)
 
     def __str__(self):
-        return self.genre
+        return self.slug
 
 
 class Categories(models.Model):
     """Модель категории одно к многим """
     category = models.CharField(max_length=80)
     slug = models.SlugField(unique=True)
-    description = models.TextField
+    description = models.CharField(
+        null=True,
+        max_length=3000,
+        verbose_name='Описание'
+    )
 
     def __str__(self) -> str:
         return self.slug
@@ -35,10 +40,8 @@ class Categories(models.Model):
 
 class Titles(models.Model):
     """Модель Произведение, базовая модель"""
-    title = models.TextField(
-        'Название произведения',
-        help_text='Введите название произведения'
-    )
+
+    name = models.TextField()
     title_urls = models.URLField(
         unique=True,
         blank=True,
@@ -54,7 +57,8 @@ class Titles(models.Model):
     )
     year = models.IntegerField(
         'Год релиза',
-        help_text='Введите год релиза')
+        help_text='Введите год релиза'
+    )
     genres = models.ManyToManyField(Genres, through='GenreTitle')
     category = models.ForeignKey(
         Categories,
@@ -65,11 +69,19 @@ class Titles(models.Model):
         blank=False,
         related_name='titles'
     )
+    description = models.CharField(
+        null=True,
+        max_length=3000,
+        verbose_name='Описание'
+    )
 
     class Meta:
         ordering = ['-year']
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class GenreTitle(models.Model):
