@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from composition.models import Titles, Author
+from composition.models import Titles
 
 USER = 'user'
 MODERATOR = 'moderator'
@@ -37,7 +37,7 @@ class Reviews(models.Model):
         null=False
     )
     author = models.ForeignKey(
-        Author,
+        User,
         on_delete=models.CASCADE,
         related_name='reviews'
     )
@@ -69,7 +69,7 @@ class Comment(models.Model):
         null=False
     )
     author = models.ForeignKey(
-        Author,
+        User,
         on_delete=models.CASCADE,
         related_name='comments'
     )

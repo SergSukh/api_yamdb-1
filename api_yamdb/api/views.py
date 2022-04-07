@@ -1,4 +1,3 @@
-from urllib import request
 import uuid
 
 from rest_framework import status, viewsets
@@ -139,17 +138,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         id = self.kwargs.get('id')
-        a=input(f'title id === {id}')
         title = get_object_or_404(Titles, id=id)
-        serializer.save(title=title, author=request.user)
+        serializer.save(title=title, author=self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
 
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Titles, id=title_id)
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Reviews, id=review_id)
         queryset = review.comments.all()
@@ -158,4 +154,4 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Reviews, id=review_id)
-        serializer.save(review=review)
+        serializer.save(review=review, author=self.request.user)
