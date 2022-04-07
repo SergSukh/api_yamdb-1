@@ -7,25 +7,52 @@ USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
 
-roles = (
-    (USER, 'user'),
-    (MODERATOR, 'moderator'),
-    (ADMIN, 'admin'),
-)
-
 
 class User(AbstractUser):
-    password = models.CharField(max_length=50, blank=True, null=False)
-    username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField('email address', unique=True)
-    role = models.CharField(choices=roles, max_length=9, default='user')
-    bio = models.TextField('Биография', max_length=256)
-    confirmation_code = models.CharField('Код подтверждения', max_length=100)
+    USER_ROLES = (
+        ("user", "Пользователь"),
+        ("moderator", "Модератор"),
+        ("admin", "Администратор"),
+    )
+    username = models.CharField(
+        "Имя пользователя",
+        max_length=128,
+        unique=True,
+        blank=False,
+        null=False,
+    )
+    bio = models.TextField(
+        "Биография",
+        blank=True,
+    )
+    email = models.EmailField("email", unique=True, null=False)
+    role = models.CharField(
+        choices=USER_ROLES,
+        max_length=10,
+        verbose_name="Роль пользователя",
+        default="user",
+    )
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
-    # PASSWORD_FIELD = 'email'
+    REQUIRED_FIELDS = ["email"]
+    USERNAME_FIELDS = "email"
 
     def __str__(self):
-        return str(self.username)
+        return self.username
+
+    @property
+    def is_admin(self):
+        return self.role == "admin" or self.is_superuser
+
+    @property
+    def is_moderator(self):
+        return self.role == "moderator"
+
+    @property
+    def is_user(self):
+        return self.role == "user"
 
 
 class Reviews(models.Model):
