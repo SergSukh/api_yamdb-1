@@ -11,13 +11,13 @@ class Author(models.Model):
     )
 
     def __str__(self) -> str:
-        self.name = self.first_name + ' ' + self.last_name
+        self.name = f'{self.first_name} {self.last_name}'
         return self.name
 
 
 class Genres(models.Model):
-    """Модель жанры, мнгое кмногому"""
-    genre = models.CharField(max_length=200, unique=False)
+    """Модель жанры, многое кмногому"""
+    name = models.CharField(max_length=200, unique=False)
     slug = models.SlugField(unique=True)
 
     def __str__(self):
@@ -26,8 +26,8 @@ class Genres(models.Model):
 
 class Categories(models.Model):
     """Модель категории одно к многим """
-    category = models.CharField(max_length=80)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=256)
+    slug = models.SlugField(max_length=50, unique=True)
     description = models.CharField(
         null=True,
         max_length=3000,
@@ -59,22 +59,14 @@ class Titles(models.Model):
         'Год релиза',
         help_text='Введите год релиза'
     )
-    genre = models.ForeignKey(
-        Genres,
-        on_delete=models.SET_NULL,
-        verbose_name='Жанры',
-        help_text='Введите жанр произведения',
-        null=True,
-        blank=True,
-        related_name='titles'
-    )
+    genre = models.ManyToManyField(Genres, through='GenreTitle')
     category = models.ForeignKey(
         Categories,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         verbose_name='Категория',
         help_text='Введите категорию произведения',
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         related_name='titles'
     )
     description = models.CharField(
@@ -89,3 +81,11 @@ class Titles(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genres, on_delete=models.CASCADE)
+    title = models.ForeignKey(Titles, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f'{self.genre} {self.title}'

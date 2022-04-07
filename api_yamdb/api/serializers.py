@@ -13,7 +13,8 @@ from composition.models import (
     Titles,
     Genres,
     Categories,
-    Author
+    Author,
+    GenreTitle
 )
 from reviews.models import (Reviews, Comment)
 
@@ -22,7 +23,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        # validators=[UniqueValidator(queryset=User.objects.all())]
     )
     username = serializers.CharField(
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -83,7 +84,7 @@ class GenresSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genres
-        fields = ('genre', 'slug')
+        fields = ('name', 'slug')
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -91,7 +92,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categories
-        fields = ('slug', 'category')
+        fields = ('slug', 'name')
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -102,12 +103,7 @@ class TitlesSerializer(serializers.ModelSerializer):
         many=False,
         queryset=Categories.objects.all()
     )
-    genre = serializers.SlugRelatedField(
-        slug_field='slug',
-        many=True,
-        required=False,
-        queryset=Genres.objects.all()
-    )
+    genres = GenresSerializer(many=True, required=False)
     author = serializers.SlugRelatedField(
         slug_field='slug',
         many=False,
@@ -142,6 +138,19 @@ class TitlesSerializer(serializers.ModelSerializer):
         if rating['score']:
             return round(rating['score'], 2)
         return None
+
+    def create(self, validated_data):
+        """Определяем наличие жанров и прописываем."""
+        if 'genres' not in self.initial_data:
+            title = Titles.objects.create(**validated_data)
+            return title
+        genres = validated_data.pop('genres')
+        title = Titles.objects.create(**validated_data)
+        for genre in genres:
+            current_genre, status = Genres.objects.get_or_create(**genre)
+            GenreTitle.objects.create(genre=current_genre, title=title)
+
+        return title
 
 
 class ReviewsSerializer(serializers.ModelSerializer):

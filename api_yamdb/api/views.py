@@ -1,18 +1,25 @@
 import uuid
 
-from rest_framework import status, viewsets
-
+from rest_framework import status, viewsets, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import (
+    IsAdminUser,
+    AllowAny,
+    IsAuthenticatedOrReadOnly
+)
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 
 from .permissions import (
     CustomIsAdmin,
-    IsAdminOrReadOnly
+    IsAdminOrReadOnly,
+    ModeratorOrReadOnly,
+    AuthorOrReadOnly
 )
 from .serializers import (
     SignUpSerializer,
@@ -48,7 +55,6 @@ class SignUp(viewsets.ModelViewSet):
         # username = serializer.validated_data['username']
         email = serializer.validated_data['email']
         if email not in User.objects.all():
-            print(email, self.request.user)
             serializer.save(confirmation_code=confirmation_code)
         return send_mail(
             'Код подверждения',
@@ -80,16 +86,17 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminUser,)
-    permission_classes = (CustomIsAdmin, )
+    permission_classes = [
+        AllowAny,
+        IsAdminUser
+    ]
     lookup_field = 'username'
 
 
 class UsernameViewSet(viewsets.ModelViewSet):
-    # queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (AllowAny,)
-    permission_classes = (CustomIsAdmin, )
+    permission_classes = [AllowAny]
+    permission_classes = [CustomIsAdmin]
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
@@ -101,25 +108,31 @@ class UsernameViewSet(viewsets.ModelViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
-    permission_classes = [
-        IsAdminOrReadOnly
-    ]
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = LimitOffsetPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('name', 'year', 'genre', 'category')
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     lookup_field = 'slug'
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        IsAdminOrReadOnly
+    ]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name', 'slug')
 
 
 class GenresViewSet(viewsets.ModelViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
     lookup_field = 'slug'
-    permission_classes = [
-        IsAdminOrReadOnly
-    ]
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name', 'slug')
 
 
 class AuthorViewSet(viewsets.ModelViewSet):
@@ -129,9 +142,13 @@ class AuthorViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
+    permission_classes = [
+        AuthorOrReadOnly,
+        ModeratorOrReadOnly
+    ]
 
     def get_queryset(self):
-        id = self.kwargs.get('id')
+        id = self.kwargs.get('title_id')
         title = get_object_or_404(Titles, id=id)
         queryset = title.reviews.all()
         return queryset
@@ -144,6 +161,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
+    permission_classes = [
+        ModeratorOrReadOnly,
+        AuthorOrReadOnly
+    ]
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')
