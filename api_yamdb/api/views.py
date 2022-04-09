@@ -116,6 +116,10 @@ class MeAPI(APIView):
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
+    """
+    Используем метод пеереопределения сериалайзера
+    в зависимости от запроса пользователя
+    """
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = [IsAdminOrReadOnly]

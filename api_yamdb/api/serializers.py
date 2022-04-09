@@ -1,5 +1,6 @@
 
 from tkinter import CURRENT
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db.models import Avg
@@ -106,7 +107,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categories
-        fields = ('name', 'slug')
+        fields = ('slug', 'name')
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -117,7 +118,12 @@ class TitlesSerializer(serializers.ModelSerializer):
         many=False,
         queryset=Categories.objects.all()
     )
-    genres = GenresSerializer(many=True, required=False)
+    genres = serializers.SlugRelatedField(
+        slug_field='slug',
+        many=True,
+        required=False,
+        queryset=Genres.objects.all()
+    )
     author = serializers.SlugRelatedField(
         slug_field='slug',
         many=False,
@@ -155,16 +161,21 @@ class TitlesSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Определяем наличие жанров и прописываем."""
+        # Используем дебаг принты:
         if 'genres' not in self.initial_data:
             title = Title.objects.create(**validated_data)
             return title
         genres = validated_data.pop('genres')
+        #a=input(f'<<<<<<<получили genres это {type(genres)}, =>внутри {genres}')
         title = Title.objects.create(**validated_data)
+        #a=input(f'!!!!!!!!!!!!!title создан{title}')
         for genre in genres:
-            current_genre, status = Genres.objects.get_or_create(**genre)
-            GenreTitle.objects.create(genre=current_genre, title=title)
-
-        return title
+            #a=input(f'!!!!!из GENRES достали {genre} это {type(genre)}')
+            current_genre = get_object_or_404(Genres, slug=genre)
+            #a=input(f'!!!!!Достали GENRES достали {current_genre} это {type(current_genre)}')
+            gt = GenreTitle.objects.create(genre=current_genre, title=title)
+            #a=input(f'!!!Создали связь {gt} это {type(gt)}')
+        return title, gt
 
 
 class TitlesViewSerializer(serializers.ModelSerializer):
