@@ -106,7 +106,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categories
-        fields = ('slug', 'name')
+        fields = ('name', 'slug')
 
 
 class TitlesSerializer(serializers.ModelSerializer):
