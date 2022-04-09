@@ -3,7 +3,6 @@ import uuid
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 
-
 from rest_framework.pagination import PageNumberPagination
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +14,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework import status, viewsets, filters, mixins
-from rest_framework.views import APIView
 
 from users.models import User
 from .paginator import CommentPagination
@@ -24,12 +22,6 @@ from .permissions import (
     IsAdminOrReadOnly,
     CustomIsAdmin,
     AuthorAndStaffOrReadOnly
-)
-from .serializers import (
-    SignUpSerializer,
-    TokenSerializer,
-    MeSerializer,
-    UsersSerializer
 )
 
 from reviews.models import (
@@ -47,7 +39,11 @@ from .serializers import (
     CategoriesSerializer,
     GenresSerializer,
     ReviewsSerializer,
-    CommentsSerializer
+    CommentsSerializer,
+    SignUpSerializer,
+    TokenSerializer,
+    MeSerializer,
+    UsersSerializer
 )
 
 
@@ -94,8 +90,8 @@ class TokenAPI(APIView):
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
+    permission_classes = [CustomIsAdmin]
     pagination_class = PageNumberPagination
-    permission_classes = (CustomIsAdmin, )
     filter_backends = (filters.SearchFilter, )
     filterset_fields = ('username')
     search_fields = ('username', )
