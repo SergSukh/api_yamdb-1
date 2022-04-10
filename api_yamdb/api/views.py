@@ -125,7 +125,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name', 'year', 'genre', 'category', 'author')
+    filterset_fields = ('name', 'year', 'genres', 'category', 'author')
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:

@@ -64,7 +64,7 @@ class Title(models.Model):
         'Год релиза',
         help_text='Введите год релиза'
     )
-    genre = models.ManyToManyField(Genres, through='GenreTitle')
+    genres = models.ManyToManyField(Genres, through='GenreTitle')
     category = models.ForeignKey(
         Categories,
         on_delete=models.SET_NULL,
